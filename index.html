@@ -3,135 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JEE OMR Sheet</title>
+    <title>JEE OMR Sheet Generator</title>
+    <!-- Tailwind CSS for mobile-friendly, beautiful styling -->
     <script src="https://jsdelivr.net"></script>
-    <style>
-        @media print {
-            body { background: white; padding: 0; margin: 0; }
-            .no-print { display: none; }
-            .print-page { border: none; box-shadow: none; margin: 0; padding: 10mm; width: 210mm; height: 297mm; position: relative; }
-        }
-        .bubble { width: 18px; height: 18px; border: 1px solid #666; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: normal; color: #333; }
-        .anchor { width: 24px; height: 24px; background: black; position: absolute; }
-    </style>
+    <!-- jsPDF Library for generating PDFs directly in the browser -->
+    <script src="https://cloudflare.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-    <!-- Action panel hidden when routing to hard copy printing -->
-    <div class="no-print bg-white rounded-2xl shadow-xl p-6 max-w-md w-full text-center border border-gray-200 mb-6">
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">JEE OMR Web Portal</h1>
-        <p class="text-gray-600 text-sm mb-4">Pure HTML version. Tapping below calls your system's hardware print driver layout directly.</p>
-        <button onclick="window.print()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-md active:scale-95 cursor-pointer">
-            Print Sheet Now
+    <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full text-center border border-gray-200">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">JEE OMR Generator</h1>
+        <p class="text-gray-600 text-sm mb-6">Generate an exam-ready, perfectly aligned 90-question OMR sheet with Roll Number and Test ID blocks.</p>
+        
+        <div class="bg-blue-50 text-blue-800 text-xs font-semibold rounded-lg p-3 mb-6 text-left border border-blue-200">
+            📌 Includes OMR matrices for Roll Number and Test ID to automate scoring.
+        </div>
+
+        <button id="generateBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl transition duration-200 shadow-md transform active:scale-95">
+            Download OMR PDF
         </button>
     </div>
 
-    <!-- Printable A4 Workspace Area -->
-    <div class="print-page bg-white w-[210mm] h-[297mm] p-[12mm] relative shadow-2xl border border-gray-300 flex flex-col justify-between box-border overflow-hidden select-none">
-        
-        <!-- Target Calibrators for OpenCV Scanning Module -->
-        <div class="anchor top-[10mm] left-[10mm]"></div>
-        <div class="anchor top-[10mm] right-[10mm]"></div>
-        <div class="anchor bottom-[10mm] left-[10mm]"></div>
-        <div class="anchor bottom-[10mm] right-[10mm]"></div>
+    <script>
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
 
-        <!-- Main Structure Header -->
-        <div class="text-center mt-2">
-            <h2 class="text-xl font-black tracking-wide text-black">JEE MAIN MOCK EXAMINATION</h2>
-            <p class="text-[11px] text-gray-700 font-medium mt-0.5">Shade bubbles completely using blue/black ink. Keep tracking marks pristine.</p>
-        </div>
+            // --- 1. DRAW ANCHOR/TIMING MARKS ---
+            const markSize = 7; 
+            const margin = 10;  
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
 
-        <!-- Student Data Registration Section -->
-        <div class="grid grid-cols-12 gap-4 my-4 items-start">
-            <!-- Roll Number Tracking Matrix -->
-            <div class="col-span-5">
-                <span class="text-[10px] font-bold block mb-1">ROLL NUMBER</span>
-                <div class="flex gap-1 mb-1.5">
-                    <div class="w-5 h-5 border border-black"></div>
-                    <div class="w-5 h-5 border border-black"></div>
-                    <div class="w-5 h-5 border border-black"></div>
-                    <div class="w-5 h-5 border border-black"></div>
-                    <div class="w-5 h-5 border border-black"></div>
-                    <div class="w-5 h-5 border border-black"></div>
-                    <div class="w-5 h-5 border border-black"></div>
-                </div>
-                <div class="space-y-0.5">
-                    <!-- Ten digit structural tracking loop rows -->
-                    <script>
-                        for(let r=0; r<=9; r++){
-                            document.write(`<div class='flex gap-1'>`);
-                            for(let c=0; c<7; c++) {
-                                document.write(`<div class='w-5 h-[17px] border border-gray-400 rounded-full flex items-center justify-center text-[9px]'>${r}</div>`);
-                            }
-                            document.write(`</div>`);
-                        }
-                    </script>
-                </div>
-            </div>
+            doc.setFillColor(0, 0, 0); 
+            doc.rect(margin, margin, markSize, markSize, 'F'); // Top-Left
+            doc.rect(pageWidth - margin - markSize, margin, markSize, markSize, 'F'); // Top-Right
+            doc.rect(margin, pageHeight - margin - markSize, markSize, markSize, 'F'); // Bottom-Left
+            doc.rect(pageWidth - margin - markSize, pageHeight - margin - markSize, markSize, markSize, 'F'); // Bottom-Right
 
-            <!-- Test Configuration Tracking Matrix -->
-            <div class="col-span-3">
-                <span class="text-[10px] font-bold block mb-1">TEST ID</span>
-                <div class="flex gap-1 mb-1.5">
-                    <div class="w-5 h-5 border border-black"></div>
-                    <div class="w-5 h-5 border border-black"></div>
-                    <div class="w-5 h-5 border border-black"></div>
-                    <div class="w-5 h-5 border border-black"></div>
-                </div>
-                <div class="space-y-0.5">
-                    <script>
-                        for(let r=0; r<=9; r++){
-                            document.write(`<div class='flex gap-1'>`);
-                            for(let c=0; c<4; c++) {
-                                document.write(`<div class='w-5 h-[17px] border border-gray-400 rounded-full flex items-center justify-center text-[9px]'>${r}</div>`);
-                            }
-                            document.write(`</div>`);
-                        }
-                    </script>
-                </div>
-            </div>
+            // --- 2. HEADER TEXT ---
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("JEE MAIN MOCK EXAMINATION", pageWidth / 2, 22, { align: "center" });
+            
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.text("Use dark blue/black ballpoint pen only. Do not smudge or tear this sheet.", pageWidth / 2, 27, { align: "center" });
 
-            <!-- Validation Signature Panels -->
-            <div class="col-span-4 flex flex-col gap-3 justify-end h-full pt-4">
-                <div>
-                    <span class="text-[9px] font-bold block mb-0.5">CANDIDATE SIGNATURE</span>
-                    <div class="w-full h-12 border border-black rounded"></div>
-                </div>
-                <div>
-                    <span class="text-[9px] font-bold block mb-0.5">INVIGILATOR SIGNATURE</span>
-                    <div class="w-full h-12 border border-black rounded"></div>
-                </div>
-            </div>
-        </div>
+            // --- 3. STUDENT INFO OMR MATRICES ---
+            const infoStartY = 35;
+            const bubbleRadius = 1.6;
+            const bubbleSpacingX = 6.5;
+            const bubbleSpacingY = 5.2;
 
-        <hr class="border-t border-black my-1" />
+            function drawOmrGrid(startX, startY, digitsCount, title) {
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text(title, startX, startY - 7);
 
-        <!-- 90 Question Distribution Workspace -->
-        <div class="grid grid-cols-3 gap-6 flex-grow">
-            <!-- Row generation macro mapped dynamically -->
-            <script>
-                const sections = ["PHYSICS (1-30)", "CHEMISTRY (31-60)", "MATHEMATICS (61-90)"];
-                const opts = ['A', 'B', 'C', 'D'];
-                
-                for(let col=0; col<3; col++) {
-                    document.write(`<div class="flex flex-col justify-between pb-2">
-                        <div class="text-center font-bold text-[11px] border-b border-black pb-0.5 mb-1.5">${sections[col]}</div>`);
-                    
-                    for(let r=0; r<30; r++) {
-                        let qNum = (col * 30) + r + 1;
-                        document.write(`<div class="flex items-center justify-between h-[18px]">
-                            <span class="text-[11px] font-bold w-5">${String(qNum).padStart(2, '0')}</span>`);
-                        
-                        opts.forEach(o => {
-                            document.write(`<div class="bubble">${o}</div>`);
-                        });
-                        document.write(`</div>`);
-                    }
-                    document.write(`</div>`);
+                for (let d = 0; d < digitsCount; d++) {
+                    doc.setDrawColor(0, 0, 0);
+                    doc.rect(startX + (d * bubbleSpacingX) - 2.2, startY - 5, 4.4, 4.4, 'S');
                 }
-            </script>
-        </div>
-    </div>
 
+                for (let r = 0; r <= 9; r++) {
+                    let y = startY + 4 + (r * bubbleSpacingY);
+                    for (let c = 0; c < digitsCount; c++) {
+                        let x = startX + (c * bubbleSpacingX);
+                        doc.setDrawColor(100, 100, 100);
+                        doc.circle(x, y, bubbleRadius, 'S');
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(6);
+                        doc.text(r.toString(), x, y + 0.7, { align: "center" });
+                    }
+                }
+                return digitsCount * bubbleSpacingX;
+            }
+
+            const rollWidth = drawOmrGrid(25, infoStartY, 7, "ROLL NUMBER");
+            const testIdStartX = 25 + rollWidth + 20; 
+            drawOmrGrid(testIdStartX, infoStartY, 4, "TEST ID");
+
+            const rightBoxX = 140;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+            doc.text("STUDENT SIGNATURE", rightBoxX, infoStartY - 2);
+            doc.rect(rightBoxX, infoStartY, 45, 18, 'S');
+            doc.text("INVIGILATOR SIGNATURE", rightBoxX, infoStartY + 25);
+            doc.rect(rightBoxX, infoStartY + 27, 45, 18, 'S');
+
+            // --- 4. QUESTION GRID ---
+            const startY = 105; 
+            const rowHeight = 6.2;
+            const qBubbleRadius = 1.6;
+            const options = ['A', 'B', 'C', 'D'];
+            const columnX =; 
+            const subjects = ["PHYSICS (1-30)", "CHEMISTRY (31-60)", "MATHEMATICS (61-90)"];
+
+            for (let col = 0; col < 3; col++) {
+                let x = columnX[col];
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text(subjects[col], x, startY - 3);
+                doc.line(x, startY - 1, x + 45, startY - 1); 
+
+                for (let r = 0; r < 30; r++) {
+                    let qNum = (col * 30) + r + 1;
+                    let y = startY + (r * rowHeight);
+
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(9);
+                    doc.text(qNum.toString().padStart(2, '0'), x, y + 0.8);
+
+                    options.forEach((opt, index) => {
+                        let bubbleX = x + 11 + (index * 8);
+                        doc.setDrawColor(100, 100, 100);
+                        doc.circle(bubbleX, y, qBubbleRadius, 'S');
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(6.5);
+                        doc.text(opt, bubbleX, y + 0.7, { align: "center" });
+                    });
+                }
+            }
+
+            // --- MOBILE BLANK SCREEN FIX ---
+            const pdfDataUri = doc.output('datauristring');
+            const newTab = window.open();
+            
+            if (newTab) {
+                newTab.document.write(`<iframe width='100%' height='100%' src='${pdfDataUri}'></iframe>`);
+            } else {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = pdfDataUri;
+                downloadLink.download = 'JEE_OMR_Sheet.pdf';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            }
+        });
+    </script>
 </body>
 </html>
