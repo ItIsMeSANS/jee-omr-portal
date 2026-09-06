@@ -54,26 +54,75 @@
             doc.setFont("helvetica", "normal");
             doc.text("Use dark blue/black ballpoint pen only. Do not smudge or tear this sheet.", pageWidth / 2, 27, { align: "center" });
 
-            // --- 3. STUDENT INFO OMR MATRICES (Top Section) ---
+            // --- 3. STUDENT INFO OMR MATRICES ---
             const infoStartY = 35;
             const bubbleRadius = 1.6;
             const bubbleSpacingX = 6.5;
             const bubbleSpacingY = 5.2;
 
-            // Helper function to draw an OMR digit grid block
             function drawOmrGrid(startX, startY, digitsCount, title) {
-                // Header Label
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(9);
                 doc.text(title, startX, startY - 7);
 
-                // Draw top rectangular square boxes for writing values manually
-                for (let d = 0; d  {
+                for (let d = 0; d < digitsCount; d++) {
+                    doc.setDrawColor(0, 0, 0);
+                    doc.rect(startX + (d * bubbleSpacingX) - 2.2, startY - 5, 4.4, 4.4, 'S');
+                }
+
+                for (let r = 0; r <= 9; r++) {
+                    let y = startY + 4 + (r * bubbleSpacingY);
+                    for (let c = 0; c < digitsCount; c++) {
+                        let x = startX + (c * bubbleSpacingX);
+                        doc.setDrawColor(100, 100, 100);
+                        doc.circle(x, y, bubbleRadius, 'S');
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(6);
+                        doc.text(r.toString(), x, y + 0.7, { align: "center" });
+                    }
+                }
+                return digitsCount * bubbleSpacingX;
+            }
+
+            const rollWidth = drawOmrGrid(25, infoStartY, 7, "ROLL NUMBER");
+            const testIdStartX = 25 + rollWidth + 20; 
+            drawOmrGrid(testIdStartX, infoStartY, 4, "TEST ID");
+
+            const rightBoxX = 140;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+            doc.text("STUDENT SIGNATURE", rightBoxX, infoStartY - 2);
+            doc.rect(rightBoxX, infoStartY, 45, 18, 'S');
+            doc.text("INVIGILATOR SIGNATURE", rightBoxX, infoStartY + 25);
+            doc.rect(rightBoxX, infoStartY + 27, 45, 18, 'S');
+
+            // --- 4. QUESTION GRID ---
+            const startY = 105; 
+            const rowHeight = 6.2;
+            const qBubbleRadius = 1.6;
+            const options = ['A', 'B', 'C', 'D'];
+            const columnX =; 
+            const subjects = ["PHYSICS (1-30)", "CHEMISTRY (31-60)", "MATHEMATICS (61-90)"];
+
+            for (let col = 0; col < 3; col++) {
+                let x = columnX[col];
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text(subjects[col], x, startY - 3);
+                doc.line(x, startY - 1, x + 45, startY - 1); 
+
+                for (let r = 0; r < 30; r++) {
+                    let qNum = (col * 30) + r + 1;
+                    let y = startY + (r * rowHeight);
+
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(9);
+                    doc.text(qNum.toString().padStart(2, '0'), x, y + 0.8);
+
+                    options.forEach((opt, index) => {
                         let bubbleX = x + 11 + (index * 8);
-                        
                         doc.setDrawColor(100, 100, 100);
                         doc.circle(bubbleX, y, qBubbleRadius, 'S');
-                        
                         doc.setFont("helvetica", "normal");
                         doc.setFontSize(6.5);
                         doc.text(opt, bubbleX, y + 0.7, { align: "center" });
@@ -81,8 +130,20 @@
                 }
             }
 
-            // Save the document instantly to mobile storage
-            doc.save('JEE_OMR_Sheet_With_Info.pdf');
+            // --- MOBILE BLANK SCREEN FIX ---
+            const pdfDataUri = doc.output('datauristring');
+            const newTab = window.open();
+            
+            if (newTab) {
+                newTab.document.write(`<iframe width='100%' height='100%' src='${pdfDataUri}'></iframe>`);
+            } else {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = pdfDataUri;
+                downloadLink.download = 'JEE_OMR_Sheet.pdf';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            }
         });
     </script>
 </body>
