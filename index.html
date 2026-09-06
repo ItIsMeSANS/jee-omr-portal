@@ -13,10 +13,10 @@
 
     <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full text-center border border-gray-200">
         <h1 class="text-2xl font-bold text-gray-800 mb-2">JEE OMR Generator</h1>
-        <p class="text-gray-600 text-sm mb-6">Generate an exam-ready, perfectly aligned 90-question OMR sheet with optical scan anchors.</p>
+        <p class="text-gray-600 text-sm mb-6">Generate an exam-ready, perfectly aligned 90-question OMR sheet with Roll Number and Test ID blocks.</p>
         
         <div class="bg-blue-50 text-blue-800 text-xs font-semibold rounded-lg p-3 mb-6 text-left border border-blue-200">
-            📌 Features fixed timing marks in all 4 corners to calibrate your camera lens during scanning.
+            📌 Includes OMR matrices for Roll Number and Test ID to automate scoring.
         </div>
 
         <button id="generateBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl transition duration-200 shadow-md transform active:scale-95">
@@ -27,20 +27,19 @@
     <script>
         document.getElementById('generateBtn').addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
-            // Create standard A4 size document in portrait format
             const doc = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
                 format: 'a4'
             });
 
-            // --- 1. DRAW ANCHOR/TIMING MARKS (Crucial for OpenCV Scanner) ---
-            const markSize = 7; // Size of corner squares in mm
-            const margin = 10;  // Margin from page borders
+            // --- 1. DRAW ANCHOR/TIMING MARKS ---
+            const markSize = 7; 
+            const margin = 10;  
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
 
-            doc.setFillColor(0, 0, 0); // Pure Black
+            doc.setFillColor(0, 0, 0); 
             doc.rect(margin, margin, markSize, markSize, 'F'); // Top-Left
             doc.rect(pageWidth - margin - markSize, margin, markSize, markSize, 'F'); // Top-Right
             doc.rect(margin, pageHeight - margin - markSize, markSize, markSize, 'F'); // Bottom-Left
@@ -51,57 +50,39 @@
             doc.setFontSize(18);
             doc.text("JEE MAIN MOCK EXAMINATION", pageWidth / 2, 22, { align: "center" });
             
-            doc.setFontSize(10);
+            doc.setFontSize(9);
             doc.setFont("helvetica", "normal");
-            doc.text("Fill bubbles completely using a black or blue ballpoint pen.", pageWidth / 2, 28, { align: "center" });
+            doc.text("Use dark blue/black ballpoint pen only. Do not smudge or tear this sheet.", pageWidth / 2, 27, { align: "center" });
 
-            // --- 3. STRUCTURED OMR GRID (90 Questions, 3 Columns of 30) ---
-            const startY = 40;
-            const rowHeight = 7.5;
-            const bubbleRadius = 1.8;
-            const options = ['A', 'B', 'C', 'D'];
-            
-            // X-coordinates for the columns (Physics, Chemistry, Maths)
-            const columnX =; 
-            const subjects = ["PHYSICS (1-30)", "CHEMISTRY (31-60)", "MATHEMATICS (61-90)"];
+            // --- 3. STUDENT INFO OMR MATRICES (Top Section) ---
+            const infoStartY = 35;
+            const bubbleRadius = 1.6;
+            const bubbleSpacingX = 6.5;
+            const bubbleSpacingY = 5.2;
 
-            for (let col = 0; col < 3; col++) {
-                let x = columnX[col];
-                
-                // Draw Subject Headers
+            // Helper function to draw an OMR digit grid block
+            function drawOmrGrid(startX, startY, digitsCount, title) {
+                // Header Label
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(9);
-                doc.text(subjects[col], x, startY - 3);
-                doc.line(x, startY - 1, x + 45, startY - 1); // Simple underline divider
+                doc.text(title, startX, startY - 7);
 
-                for (let r = 0; r < 30; r++) {
-                    let qNum = (col * 30) + r + 1;
-                    let y = startY + (r * rowHeight);
-
-                    // Set Question number layout styling
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(10);
-                    doc.text(qNum.toString().padStart(2, '0'), x, y + 1);
-
-                    // Render A, B, C, D Bubbles
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(7);
-                    
-                    options.forEach((opt, index) => {
-                        let bubbleX = x + 12 + (index * 8.5);
+                // Draw top rectangular square boxes for writing values manually
+                for (let d = 0; d  {
+                        let bubbleX = x + 11 + (index * 8);
                         
-                        // Draw outline of the target bubble circle
-                        doc.setDrawColor(80, 80, 80);
-                        doc.circle(bubbleX, y, bubbleRadius, 'S');
+                        doc.setDrawColor(100, 100, 100);
+                        doc.circle(bubbleX, y, qBubbleRadius, 'S');
                         
-                        // Center option text inside the bubble circle perfectly
-                        doc.text(opt, bubbleX, y + 0.8, { align: "center" });
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(6.5);
+                        doc.text(opt, bubbleX, y + 0.7, { align: "center" });
                     });
                 }
             }
 
             // Save the document instantly to mobile storage
-            doc.save('JEE_90Q_OMR_Sheet.pdf');
+            doc.save('JEE_OMR_Sheet_With_Info.pdf');
         });
     </script>
 </body>
